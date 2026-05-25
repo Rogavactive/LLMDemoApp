@@ -8,15 +8,18 @@ import android.os.Build
 import android.provider.MediaStore
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import ge.rogavactive.llmdemoapp.engine.FoodAgentEngine
+import ge.rogavactive.llmdemoapp.tools.FoodClassifierTool
+import ge.rogavactive.llmdemoapp.tools.FoodResult
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val agentEngine = FoodAgentEngine(application)
+    private val classifierTool = FoodClassifierTool(application)
 
     private val _uiState = MutableStateFlow(UiState())
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
@@ -25,48 +28,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     data class UiState(
         val selectedImageUri: Uri? = null,
-        val isLoading: Boolean = true,
-        val isReady: Boolean = false,
         val isAnalyzing: Boolean = false,
-        val result: String? = null,
+        val result: FoodResult? = null,
         val error: String? = null
     )
 
-    init {
-        initializeAgent()
-    }
-
-    private fun initializeAgent() {
-        viewModelScope.launch {
-            try {
-                val apiKey = BuildConfig.GEMINI_API_KEY
-                if (apiKey.isBlank()) {
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        error = "GEMINI_API_KEY not set in local.properties"
-                    )
-                    return@launch
-                }
-                agentEngine.initialize(apiKey)
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    isReady = true
-                )
-            } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    error = "Failed to initialize: ${e.message}"
-                )
-            }
-        }
-    }
-
     fun onImageSelected(uri: Uri) {
-        _uiState.value = _uiState.value.copy(
-            selectedImageUri = uri,
-            result = null,
-            error = null
-        )
+        _uiState.value = UiState(selectedImageUri = uri)
         selectedBitmap = loadBitmapFromUri(uri)
     }
 
@@ -78,17 +46,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isAnalyzing = true, result = null, error = null)
-            try {
-                agentEngine.setBitmap(bitmap)
-                val result = agentEngine.analyzeFood()
+            val result = withContext(Dispatchers.Default) {
+                classifierTool.setBitmap(bitmap)
+                classifierTool.classify()
+            }
+            if (result != null) {
+                _uiState.value = _uiState.value.copy(isAnalyzing = false, result = result)
+            } else {
                 _uiState.value = _uiState.value.copy(
                     isAnalyzing = false,
-                    result = result
-                )
-            } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(
-                    isAnalyzing = false,
-                    error = "Analysis failed: ${e.message}"
+                    error = "Could not identify food in the image"
                 )
             }
         }

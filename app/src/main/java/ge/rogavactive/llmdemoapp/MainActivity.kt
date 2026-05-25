@@ -8,6 +8,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,6 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -30,9 +32,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import ge.rogavactive.llmdemoapp.tools.FoodResult
 import ge.rogavactive.llmdemoapp.ui.theme.LLMDemoAPpTheme
 
 class MainActivity : ComponentActivity() {
@@ -76,105 +80,121 @@ fun FoodAnalyzerScreen(
         )
 
         Text(
-            text = "ADK Agent + On-device TFLite classifier + Cloud Gemini",
+            text = "Fully offline • On-device TFLite classifier",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
-        when {
-            uiState.isLoading -> {
-                Spacer(modifier = Modifier.height(32.dp))
-                CircularProgressIndicator()
-                Text("Initializing agent...")
-            }
-            !uiState.isReady -> {
-                ErrorCard(error = uiState.error ?: "Unknown error")
-            }
-            else -> {
-                Button(
-                    onClick = { imagePickerLauncher.launch("image/*") },
-                    enabled = !uiState.isAnalyzing
-                ) {
-                    Text("Pick Food Image")
-                }
+        Button(
+            onClick = { imagePickerLauncher.launch("image/*") },
+            enabled = !uiState.isAnalyzing
+        ) {
+            Text("Pick Food Image")
+        }
 
-                uiState.selectedImageUri?.let { uri ->
-                    AsyncImage(
-                        model = uri,
-                        contentDescription = "Selected food image",
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(250.dp)
-                            .clip(RoundedCornerShape(12.dp)),
-                        contentScale = ContentScale.Crop
+        uiState.selectedImageUri?.let { uri ->
+            AsyncImage(
+                model = uri,
+                contentDescription = "Selected food image",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(250.dp)
+                    .clip(RoundedCornerShape(12.dp)),
+                contentScale = ContentScale.Crop
+            )
+
+            Button(
+                onClick = { viewModel.analyzeImage() },
+                enabled = !uiState.isAnalyzing
+            ) {
+                if (uiState.isAnalyzing) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        strokeWidth = 2.dp
                     )
-
-                    Button(
-                        onClick = { viewModel.analyzeImage() },
-                        enabled = !uiState.isAnalyzing
-                    ) {
-                        if (uiState.isAnalyzing) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(20.dp),
-                                strokeWidth = 2.dp
-                            )
-                            Text("  Analyzing...", modifier = Modifier.padding(start = 8.dp))
-                        } else {
-                            Text("Analyze Food")
-                        }
-                    }
-                }
-
-                uiState.result?.let { result ->
-                    ResultCard(result = result)
-                }
-
-                if (uiState.error != null) {
-                    Text(
-                        text = uiState.error!!,
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
+                    Text("  Analyzing...", modifier = Modifier.padding(start = 8.dp))
+                } else {
+                    Text("Analyze Food")
                 }
             }
         }
-    }
-}
 
-@Composable
-fun ErrorCard(error: String) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = "Setup Error",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.error
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(text = error, style = MaterialTheme.typography.bodyMedium)
+        uiState.result?.let { result ->
+            ResultCard(result = result)
         }
-    }
-}
 
-@Composable
-fun ResultCard(result: String) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        uiState.error?.let { error ->
             Text(
-                text = "Analysis Result",
-                style = MaterialTheme.typography.titleMedium
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = result,
+                text = error,
+                color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodyMedium
             )
         }
+    }
+}
+
+@Composable
+fun ResultCard(result: FoodResult) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer
+        )
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = result.foodName,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = "Confidence: ${(result.confidence * 100).toInt()}%",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text(
+                text = "Per 100g:",
+                style = MaterialTheme.typography.titleSmall
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                NutritionItem("Calories", "${result.calories} kcal")
+                NutritionItem("Protein", "${result.protein}g")
+                NutritionItem("Carbs", "${result.carbs}g")
+                NutritionItem("Fat", "${result.fat}g")
+            }
+
+            if (result.alternatives.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = "Also possible: ${result.alternatives.joinToString(", ")}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun NutritionItem(label: String, value: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Bold
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodySmall
+        )
     }
 }
