@@ -2,7 +2,6 @@ package ge.rogavactive.llmdemoapp.tools
 
 import android.content.Context
 import android.graphics.Bitmap
-import com.google.adk.tools.Annotations.Schema
 import org.tensorflow.lite.task.vision.classifier.ImageClassifier
 import org.tensorflow.lite.support.image.TensorImage
 
@@ -22,7 +21,6 @@ class FoodClassifierTool(private val context: Context) {
         lastBitmap = bitmap
     }
 
-    @Schema(description = "Classify a food item from the user's currently selected image. Call this when the user wants to know what food is in their photo.")
     fun classifyFood(): Map<String, String> {
         val bitmap = lastBitmap ?: return mapOf(
             "error" to "No image is currently selected"
