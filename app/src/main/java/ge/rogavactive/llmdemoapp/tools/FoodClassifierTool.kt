@@ -14,6 +14,18 @@ data class FoodResult(
     val protein: Int,
     val carbs: Int,
     val fat: Int,
+    val fiber: Double,
+    val sugar: Double,
+    val sodium: Int,
+    val cholesterol: Int,
+    val vitaminA: Int,
+    val vitaminC: Int,
+    val vitaminD: Double,
+    val vitaminB12: Double,
+    val calcium: Int,
+    val iron: Double,
+    val potassium: Int,
+    val folate: Int,
     val alternatives: List<String>
 )
 
@@ -82,10 +94,6 @@ class FoodClassifierTool(private val context: Context) {
             val topName = labelMap[topResult.index] ?: topResult.label
 
             val nutrition = nutritionMap[topName]
-            val calories = nutrition?.optInt("calories", 0) ?: 0
-            val protein = nutrition?.optInt("protein", 0) ?: 0
-            val carbs = nutrition?.optInt("carbs", 0) ?: 0
-            val fat = nutrition?.optInt("fat", 0) ?: 0
 
             val alternatives = categories.drop(1).map { cat ->
                 val name = labelMap[cat.index] ?: cat.label
@@ -95,10 +103,22 @@ class FoodClassifierTool(private val context: Context) {
             FoodResult(
                 foodName = topName,
                 confidence = topResult.score,
-                calories = calories,
-                protein = protein,
-                carbs = carbs,
-                fat = fat,
+                calories = nutrition?.optInt("calories", 0) ?: 0,
+                protein = nutrition?.optInt("protein", 0) ?: 0,
+                carbs = nutrition?.optInt("carbs", 0) ?: 0,
+                fat = nutrition?.optInt("fat", 0) ?: 0,
+                fiber = nutrition?.optDouble("fiber", 0.0) ?: 0.0,
+                sugar = nutrition?.optDouble("sugar", 0.0) ?: 0.0,
+                sodium = nutrition?.optInt("sodium", 0) ?: 0,
+                cholesterol = nutrition?.optInt("cholesterol", 0) ?: 0,
+                vitaminA = nutrition?.optInt("vitamin_a_mcg", 0) ?: 0,
+                vitaminC = nutrition?.optInt("vitamin_c_mg", 0) ?: 0,
+                vitaminD = nutrition?.optDouble("vitamin_d_mcg", 0.0) ?: 0.0,
+                vitaminB12 = nutrition?.optDouble("vitamin_b12_mcg", 0.0) ?: 0.0,
+                calcium = nutrition?.optInt("calcium_mg", 0) ?: 0,
+                iron = nutrition?.optDouble("iron_mg", 0.0) ?: 0.0,
+                potassium = nutrition?.optInt("potassium_mg", 0) ?: 0,
+                folate = nutrition?.optInt("folate_mcg", 0) ?: 0,
                 alternatives = alternatives
             )
         } catch (e: Exception) {

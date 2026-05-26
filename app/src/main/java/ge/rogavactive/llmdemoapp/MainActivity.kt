@@ -156,10 +156,7 @@ fun ResultCard(result: FoodResult) {
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            Text(
-                text = "Per 100g:",
-                style = MaterialTheme.typography.titleSmall
-            )
+            Text(text = "Per 100g", style = MaterialTheme.typography.titleSmall)
             Spacer(modifier = Modifier.height(4.dp))
 
             Row(
@@ -170,6 +167,45 @@ fun ResultCard(result: FoodResult) {
                 NutritionItem("Protein", "${result.protein}g")
                 NutritionItem("Carbs", "${result.carbs}g")
                 NutritionItem("Fat", "${result.fat}g")
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                NutritionItem("Fiber", "${result.fiber}g")
+                NutritionItem("Sugar", "${result.sugar}g")
+                NutritionItem("Sodium", "${result.sodium}mg")
+                NutritionItem("Cholest.", "${result.cholesterol}mg")
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text(text = "Vitamins & Minerals", style = MaterialTheme.typography.titleSmall)
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                NutritionItem("Vit A", "${result.vitaminA}mcg")
+                NutritionItem("Vit C", "${result.vitaminC}mg")
+                NutritionItem("Vit D", "${result.vitaminD}mcg")
+                NutritionItem("Vit B12", "${result.vitaminB12}mcg")
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                NutritionItem("Calcium", "${result.calcium}mg")
+                NutritionItem("Iron", "${result.iron}mg")
+                NutritionItem("Potassium", "${result.potassium}mg")
+                NutritionItem("Folate", "${result.folate}mcg")
             }
 
             if (result.alternatives.isNotEmpty()) {
@@ -189,12 +225,12 @@ fun NutritionItem(label: String, value: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             text = value,
-            style = MaterialTheme.typography.bodyLarge,
+            style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Bold
         )
         Text(
             text = label,
-            style = MaterialTheme.typography.bodySmall
+            style = MaterialTheme.typography.labelSmall
         )
     }
 }
