@@ -28,6 +28,8 @@ class FoodClassifierAdkService(
         Log.d(TAG, "clearImages: registry cleared")
     }
 
+    private val classifierLock = Object()
+
     @Tool
     fun classifyFoodImage(
         @Param("Zero-based index of the image to classify from the user's uploaded images")
@@ -44,8 +46,12 @@ class FoodClassifierAdkService(
 
         val bitmap = imageRegistry[imageIndex]
         Log.d(TAG, "Classifying image[$imageIndex]: ${bitmap.width}x${bitmap.height}, bitmapHash=${System.identityHashCode(bitmap)}")
-        classifierTool.setBitmap(bitmap)
-        val result = classifierTool.classify()
+
+        val result = synchronized(classifierLock) {
+            classifierTool.setBitmap(bitmap)
+            classifierTool.classify()
+        }
+
         if (result == null) {
             Log.w(TAG, "Classifier returned null for image[$imageIndex]")
             return mapOf("error" to "Could not identify food in image at index $imageIndex")

@@ -48,6 +48,11 @@ android {
         compose = true
         buildConfig = true
     }
+    sourceSets {
+        getByName("main") {
+            java.srcDir("build/generated/ksp/debug/kotlin")
+        }
+    }
     packaging {
         resources {
             excludes += setOf(
